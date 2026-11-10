@@ -71,6 +71,8 @@
   .xrate{position:relative;color:var(--paper-dim);font-size:11.5px;text-align:right;margin-top:10px;font-variant-numeric:tabular-nums;line-height:1.6}
   .xrate em{color:var(--gold);font-style:normal}
 
+  .sidewrap{display:none;margin:0 2px 12px}
+  body.bankmode:not(.calc) .sidewrap{display:block}
   body.calc .srcrow,body.calc #mid,body.calc #lineTo,body.calc #xrate,body.calc #from{display:none}
   body.calc .screen{padding-bottom:18px}
 
@@ -119,6 +121,14 @@
 <div class="srcrow" id="srcRow">
   <select id="src"></select>
   <span class="when" id="whenLine">завантаження…</span>
+</div>
+
+<div class="sidewrap" id="sideRow">
+  <div class="seg">
+    <button id="sideAuto" class="on">Авто</button>
+    <button id="sideBuy">Купівля</button>
+    <button id="sideSell">Продаж</button>
+  </div>
 </div>
 
 <div class="screen">
@@ -180,7 +190,9 @@ var FALLBACK = {
   MDL:[2.5240,"Молдовський лей"], TRY:[0.9050,"Турецька ліра"]
 };
 var MAIN = ["USD","EUR","PLN","GBP","CHF","CZK","CAD","AUD","JPY","CNY","SEK","NOK","DKK","RON","HUF","MDL","TRY"];
-var K_PAIR = "kurs-pair-v1", K_MODE = "kurs-mode-v1", K_SRC = "kurs-src-v1";
+var K_PAIR = "kurs-pair-v1", K_MODE = "kurs-mode-v1", K_SRC = "kurs-src-v1", K_SIDE = "kurs-side-v1";
+var SIDE_NAME = { buy:"купівля", sell:"продаж" };
+var side = "auto";
 
 var DATA = { nbu:null, banks:[], updated:null, stale:false };
 var srcId = "nbu", expr = "", done = false;
@@ -233,18 +245,22 @@ function convert(v, from, to){
   if(from === "UAH"){
     var p = b.pairs[to];
     if(!p) return null;
-    return { value: v/p.sell, note: "<em>продаж</em> " + fmt(p.sell,4) + " ₴ за 1 " + to };
+    var sp = (side === "auto") ? "sell" : side;
+    return { value: v/p[sp], note: "<em>" + SIDE_NAME[sp] + "</em> " + fmt(p[sp],4) + " ₴ за 1 " + to };
   }
   if(to === "UAH"){
     var q = b.pairs[from];
     if(!q) return null;
-    return { value: v*q.buy, note: "<em>купівля</em> " + fmt(q.buy,4) + " ₴ за 1 " + from };
+    var sq = (side === "auto") ? "buy" : side;
+    return { value: v*q[sq], note: "<em>" + SIDE_NAME[sq] + "</em> " + fmt(q[sq],4) + " ₴ за 1 " + from };
   }
   var a = b.pairs[from], z = b.pairs[to];
   if(!a || !z) return null;
+  var sa = (side === "auto") ? "buy" : side, sz = (side === "auto") ? "sell" : side;
   return {
-    value: v*a.buy/z.sell,
-    note: "через гривню: <em>купівля</em> " + fmt(a.buy,4) + " · <em>продаж</em> " + fmt(z.sell,4)
+    value: v*a[sa]/z[sz],
+    note: "через гривню: " + from + " <em>" + SIDE_NAME[sa] + "</em> " + fmt(a[sa],4) +
+          " · " + to + " <em>" + SIDE_NAME[sz] + "</em> " + fmt(z[sz],4)
   };
 }
 
@@ -377,8 +393,18 @@ function drawTable(){
   tb.innerHTML = rows;
 }
 
+function setSide(s, remember){
+  side = s;
+  $("sideAuto").classList.toggle("on", s === "auto");
+  $("sideBuy").classList.toggle("on", s === "buy");
+  $("sideSell").classList.toggle("on", s === "sell");
+  if(remember) store(K_SIDE, s);
+  show();
+}
+
 function render(){
   fillSrc(); fillPair();
+  document.body.classList.toggle("bankmode", !!bank());
   $("whenLine").innerHTML = whenText();
   show();
   if($("rates").style.display === "block") drawTable();
@@ -482,10 +508,14 @@ $("src").addEventListener("change", function(){
   srcId = this.value;
   store(K_SRC, srcId);
   fillPair();
+  document.body.classList.toggle("bankmode", !!bank());
   $("whenLine").innerHTML = whenText();
   show();
   if($("rates").style.display === "block") drawTable();
 });
+$("sideAuto").addEventListener("click", function(){ setSide("auto", true); });
+$("sideBuy").addEventListener("click", function(){ setSide("buy", true); });
+$("sideSell").addEventListener("click", function(){ setSide("sell", true); });
 $("ratesBtn").addEventListener("click", function(){
   var box = $("rates"), open = box.style.display === "block";
   box.style.display = open ? "none" : "block";
@@ -506,6 +536,8 @@ $("swapBtn").addEventListener("click", function(){
 });
 
 srcId = recall(K_SRC) || "nbu";
+var sv = recall(K_SIDE);
+setSide(sv === "buy" || sv === "sell" ? sv : "auto", false);
 setMode(recall(K_MODE) === "calc" ? "calc" : "cur", false);
 applyFallback();
 render();
