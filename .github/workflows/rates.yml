@@ -1,0 +1,14 @@
+name: Оновлення курсів банків
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Заглушка
+        run: echo "placeholder"
