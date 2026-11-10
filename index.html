@@ -7,91 +7,142 @@
 <meta name="description" content="Калькулятор з живим офіційним курсом НБУ: конвертація валют і звичайні обчислення.">
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#0e1626">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600;7..72,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0c0f13; --panel:#15191f; --key:#1f252e; --key2:#2a323d;
-    --line:#2b333f; --txt:#f2f5f9; --dim:#8b97a8;
-    --acc:#f2c14e; --acc2:#6fd8ad; --rad:18px;
+    --ink:#0e1626;        /* чорнило банкноти */
+    --plate:#16203a;      /* друкарська пластина */
+    --engrave:#2a3a63;    /* гравійовані лінії */
+    --slate:#223055;      /* службові клавіші */
+    --paper:#ece4d4;      /* папір */
+    --paper-dim:#9aa6bf;
+    --violet:#9484cc;     /* 50 грн */
+    --gold:#cf9a52;       /* 500 грн */
+    --jade:#4fb292;       /* гривня */
+    --r:14px;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;touch-action:manipulation}
-  html,body{margin:0;background:var(--bg);touch-action:manipulation}
-  .pad button,.divider button,.topbar button,select{touch-action:manipulation}
+  html,body{margin:0;background:var(--ink);touch-action:manipulation}
   body{
-    padding:14px 12px 28px;max-width:440px;margin:0 auto;color:var(--txt);
-    font:16px/1.4 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding:16px 12px 30px;max-width:440px;margin:0 auto;color:var(--paper);
+    font:16px/1.45 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:
+      radial-gradient(120% 70% at 50% -10%, #1b2742 0%, rgba(27,39,66,0) 60%),
+      var(--ink);
+    min-height:100vh;
   }
-  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding:0 4px;gap:8px}
-  .topbar span{color:var(--dim);font-size:12px}
-  .topbar b{color:var(--acc2);font-weight:600}
-  .topbar b.stale{color:var(--acc)}
-  .topbar button{background:none;border:1px solid var(--line);color:var(--dim);border-radius:999px;padding:6px 12px;font-size:12px;font-family:inherit;cursor:pointer;white-space:nowrap}
+  .num{font-family:Literata,Georgia,serif;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 
-  .screen{background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:14px;margin-bottom:12px}
-  .expr{color:var(--dim);font-size:14px;text-align:right;min-height:20px;font-variant-numeric:tabular-nums;overflow:hidden;white-space:nowrap;direction:rtl}
-  .line{display:flex;align-items:center;gap:10px;margin-top:6px}
-  .line .val{flex:1;min-width:0;text-align:right;font-weight:600;font-variant-numeric:tabular-nums;overflow:hidden;white-space:nowrap;letter-spacing:-.02em}
-  #val{font-size:34px}
-  #conv{font-size:27px;color:var(--acc2)}
+  /* шапка */
+  .topbar{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 2px 12px}
+  .topbar .when{color:var(--paper-dim);font-size:12.5px}
+  .topbar .when b{color:var(--jade);font-weight:600;font-family:Literata,Georgia,serif}
+  .topbar .when b.stale{color:var(--gold)}
+  .topbar button{
+    background:transparent;border:1px solid var(--engrave);color:var(--paper-dim);
+    border-radius:999px;padding:6px 13px;font-size:12.5px;font-family:inherit;cursor:pointer;white-space:nowrap;
+  }
+  .topbar button:active{border-color:var(--violet);color:var(--paper)}
+
+  /* екран */
+  .screen{
+    position:relative;overflow:hidden;
+    background:var(--plate);border:1px solid var(--engrave);border-radius:var(--r);
+    padding:16px 16px 14px;margin-bottom:14px;
+    box-shadow:inset 0 1px 0 rgba(236,228,212,.06);
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><g fill='none' stroke='%23ece4d4' stroke-opacity='0.055' stroke-width='0.7'><circle cx='60' cy='60' r='55'/><circle cx='60' cy='60' r='45'/><circle cx='60' cy='60' r='35'/><circle cx='60' cy='60' r='25'/><circle cx='60' cy='60' r='15'/><circle cx='0' cy='0' r='35'/><circle cx='120' cy='120' r='35'/><circle cx='120' cy='0' r='25'/><circle cx='0' cy='120' r='25'/></g></svg>");
+  }
+  .mark{
+    position:absolute;right:10px;bottom:-26px;font-family:Literata,Georgia,serif;
+    font-size:118px;line-height:1;color:rgba(236,228,212,.045);pointer-events:none;font-weight:700;
+  }
+  .expr{
+    position:relative;color:var(--paper-dim);font-size:14px;text-align:right;min-height:20px;
+    overflow:hidden;white-space:nowrap;direction:rtl;
+  }
+  .line{position:relative;display:flex;align-items:center;gap:12px;margin-top:4px}
+  .line .val{flex:1;min-width:0;text-align:right;overflow:hidden;white-space:nowrap;font-weight:600}
+  #val{font-size:36px}
+  #conv{font-size:28px;color:var(--jade)}
   select{
-    background:var(--key);border:1px solid var(--line);color:var(--txt);border-radius:12px;
-    padding:9px 26px 9px 11px;font-size:15px;font-weight:700;font-family:inherit;outline:none;
-    appearance:none;min-width:88px;cursor:pointer;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6' fill='%238b97a8'><path d='M0 0h10L5 6z'/></svg>");
+    background:var(--ink);border:1px solid var(--engrave);color:var(--paper);
+    border-radius:10px;padding:9px 27px 9px 11px;font-size:15px;font-weight:600;
+    font-family:Literata,Georgia,serif;letter-spacing:.02em;
+    outline:none;appearance:none;min-width:90px;cursor:pointer;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6' fill='%239484cc'><path d='M0 0h10L5 6z'/></svg>");
     background-repeat:no-repeat;background-position:right 10px center;background-size:9px;
   }
-  select:focus{border-color:var(--acc)}
-  .divider{display:flex;align-items:center;gap:10px;margin:11px 0 4px}
-  .divider i{flex:1;height:1px;background:var(--line)}
-  .divider button{
-    background:var(--key);border:1px solid var(--line);color:var(--acc);
-    width:34px;height:34px;border-radius:50%;font-size:14px;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;transition:transform .25s;
+  select:focus{border-color:var(--violet)}
+  .mid{position:relative;display:flex;align-items:center;gap:12px;margin:12px 0 6px}
+  .mid i{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--engrave),transparent)}
+  .mid button{
+    background:var(--ink);border:1px solid var(--engrave);color:var(--violet);
+    width:36px;height:36px;border-radius:50%;font-size:15px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;flex:none;
   }
-  .divider button:active{transform:rotate(180deg)}
-  .xrate{color:var(--dim);font-size:11.5px;text-align:right;margin-top:8px;font-variant-numeric:tabular-nums}
+  .mid button:active{background:var(--violet);color:var(--ink);border-color:var(--violet)}
+  .xrate{position:relative;color:var(--paper-dim);font-size:11.5px;text-align:right;margin-top:10px;font-variant-numeric:tabular-nums}
 
+  /* клавіатура */
   .pad{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
   .pad button{
-    background:var(--key);border:none;color:var(--txt);border-radius:16px;height:60px;
-    font-size:23px;font-weight:600;font-family:inherit;cursor:pointer;
-    font-variant-numeric:tabular-nums;transition:filter .08s;
+    border:none;border-radius:var(--r);height:62px;cursor:pointer;
+    font-family:Literata,Georgia,serif;font-variant-numeric:tabular-nums;
+    font-size:25px;font-weight:600;
+    background:var(--paper);color:var(--ink);
+    box-shadow:0 1px 0 rgba(0,0,0,.35);
+    transition:transform .06s ease;
   }
-  .pad button:active{filter:brightness(1.5)}
-  .pad .op{background:var(--key2);color:var(--acc);font-size:24px}
-  .pad .fn{background:var(--key2);color:var(--dim);font-size:19px}
-  .pad .eq{background:var(--acc);color:#15181d}
+  .pad button:active{transform:scale(.96)}
+  .pad .op{background:var(--violet);color:#141a2c;font-size:26px}
+  .pad .fn{background:var(--slate);color:var(--paper-dim);font-family:Inter,sans-serif;font-size:18px;font-weight:500}
+  .pad .eq{background:var(--gold);color:#1a1205}
   .pad .wide{grid-column:span 2}
+  @media (prefers-reduced-motion:reduce){ .pad button{transition:none} }
 
-  .rates{display:none;background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:14px;margin-top:12px}
-  .rhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
-  .rhead h2{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--dim);margin:0;font-weight:600}
-  table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
-  td{padding:8px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+  /* курси */
+  .rates{
+    display:none;background:var(--plate);border:1px solid var(--engrave);
+    border-radius:var(--r);padding:14px;margin-top:14px;
+  }
+  .rhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px}
+  .rhead h2{font-size:14px;margin:0;font-weight:600;font-family:Literata,Georgia,serif;color:var(--paper)}
+  .rhead button{
+    background:transparent;border:1px solid var(--engrave);color:var(--paper-dim);
+    border-radius:999px;padding:6px 13px;font-size:12.5px;font-family:inherit;cursor:pointer;
+  }
+  .rhead button:active{border-color:var(--jade);color:var(--paper)}
+  table{width:100%;border-collapse:collapse}
+  td{padding:9px 0;border-bottom:1px solid rgba(42,58,99,.6);font-size:15px}
   tr:last-child td{border-bottom:none}
-  td.c{font-weight:700;width:52px}
-  td.n{color:var(--dim);font-size:12px}
-  td.v{text-align:right;font-weight:600;white-space:nowrap}
-  .note{color:#67727f;font-size:11px;margin-top:10px;line-height:1.5}
-  .note a{color:#8b97a8}
+  td.c{width:54px;font-family:Literata,Georgia,serif;font-weight:700;color:var(--gold);letter-spacing:.02em}
+  td.n{color:var(--paper-dim);font-size:12.5px}
+  td.v{text-align:right;white-space:nowrap;font-family:Literata,Georgia,serif;font-variant-numeric:tabular-nums;font-weight:600}
+  .note{color:#76829b;font-size:11.5px;margin-top:12px;line-height:1.55}
+  .note a{color:var(--violet)}
+  :focus-visible{outline:2px solid var(--violet);outline-offset:2px}
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <span id="status">Курс НБУ: <b id="asof">завантаження…</b></span>
+  <span class="when">Офіційний курс НБУ на <b id="asof">завантаження…</b></span>
   <button id="ratesBtn">Курси</button>
 </div>
 
 <div class="screen">
-  <div class="expr" id="expr"></div>
+  <div class="mark">₴</div>
+  <div class="expr num" id="expr"></div>
   <div class="line">
-    <div class="val" id="val">0</div>
+    <div class="val num" id="val">0</div>
     <select id="from"></select>
   </div>
-  <div class="divider"><i></i><button id="swapBtn" title="Поміняти">⇅</button><i></i></div>
+  <div class="mid"><i></i><button id="swapBtn" title="Поміняти валюти">⇅</button><i></i></div>
   <div class="line">
-    <div class="val" id="conv">0</div>
+    <div class="val num" id="conv">0</div>
     <select id="to"></select>
   </div>
   <div class="xrate" id="xrate"></div>
@@ -122,13 +173,14 @@
 <div class="rates" id="rates">
   <div class="rhead">
     <h2>Курси до гривні</h2>
-    <button id="reloadBtn" style="background:none;border:1px solid var(--line);color:var(--dim);border-radius:999px;padding:6px 12px;font-size:12px;font-family:inherit;cursor:pointer">Оновити</button>
+    <button id="reloadBtn">Оновити</button>
   </div>
   <table id="tbl"></table>
   <div class="note">
-    Офіційний курс НБУ — скільки гривень коштує 1 одиниця валюти. Курси завантажуються
-    напряму з <a href="https://bank.gov.ua" target="_blank" rel="noopener">bank.gov.ua</a> при кожному відкритті.
-    У банках та обмінниках курс купівлі/продажу відрізняється. Крос-курси (USD→PLN тощо) рахуються через гривню.
+    Скільки гривень коштує одна одиниця валюти. Курси беруться напряму з
+    <a href="https://bank.gov.ua" target="_blank" rel="noopener">bank.gov.ua</a> при кожному відкритті.
+    У банках та обмінниках курс купівлі й продажу відрізняється від офіційного.
+    Пари без гривні — USD→PLN і подібні — рахуються через гривню.
   </div>
 </div>
 
@@ -161,7 +213,7 @@ function $(id){ return document.getElementById(id); }
 function get(c){ for(var i=0;i<list.length;i++) if(list[i][0]===c) return list[i]; return null; }
 function fmt(x,d){ return x.toLocaleString("uk-UA",{minimumFractionDigits:d,maximumFractionDigits:d}); }
 
-/* ---------- завантаження курсів ---------- */
+/* ---------- курси ---------- */
 function order(a,b){
   if(a[0]==="UAH") return -1; if(b[0]==="UAH") return 1;
   var ia=MAIN.indexOf(a[0]), ib=MAIN.indexOf(b[0]);
@@ -213,7 +265,7 @@ function savePair(){
   try{ localStorage.setItem(PREF, $("from").value + "|" + $("to").value); }catch(e){}
 }
 
-/* ---------- калькулятор ---------- */
+/* ---------- обчислення ---------- */
 function compute(s){
   s = s.replace(/×/g,"*").replace(/÷/g,"/").replace(/−/g,"-");
   s = s.replace(/(\d*\.?\d+)%/g, function(m,n){ return String(parseFloat(n)/100); });
@@ -326,6 +378,7 @@ document.querySelectorAll(".pad button").forEach(function(b){
     last = t;
   }, {passive:false});
 })();
+
 document.addEventListener("keydown", function(e){
   var m = {"/":"÷","*":"×","-":"−","+":"+","=":"=","Enter":"=","Backspace":"back","Escape":"C"};
   if(/^[0-9]$/.test(e.key)) press(e.key);
