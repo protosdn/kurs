@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Калькулятор з курсом валют НБУ</title>
+<meta name="description" content="Калькулятор з живим офіційним курсом НБУ: конвертація валют і звичайні обчислення.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0c0f13; --panel:#15191f; --key:#1f252e; --key2:#2a323d;
+    --line:#2b333f; --txt:#f2f5f9; --dim:#8b97a8;
+    --acc:#f2c14e; --acc2:#6fd8ad; --rad:18px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+  html,body{margin:0;background:var(--bg)}
+  body{
+    padding:14px 12px 28px;max-width:440px;margin:0 auto;color:var(--txt);
+    font:16px/1.4 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding:0 4px;gap:8px}
+  .topbar span{color:var(--dim);font-size:12px}
+  .topbar b{color:var(--acc2);font-weight:600}
+  .topbar b.stale{color:var(--acc)}
+  .topbar button{background:none;border:1px solid var(--line);color:var(--dim);border-radius:999px;padding:6px 12px;font-size:12px;font-family:inherit;cursor:pointer;white-space:nowrap}
+
+  .screen{background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:14px;margin-bottom:12px}
+  .expr{color:var(--dim);font-size:14px;text-align:right;min-height:20px;font-variant-numeric:tabular-nums;overflow:hidden;white-space:nowrap;direction:rtl}
+  .line{display:flex;align-items:center;gap:10px;margin-top:6px}
+  .line .val{flex:1;min-width:0;text-align:right;font-weight:600;font-variant-numeric:tabular-nums;overflow:hidden;white-space:nowrap;letter-spacing:-.02em}
+  #val{font-size:34px}
+  #conv{font-size:27px;color:var(--acc2)}
+  select{
+    background:var(--key);border:1px solid var(--line);color:var(--txt);border-radius:12px;
+    padding:9px 26px 9px 11px;font-size:15px;font-weight:700;font-family:inherit;outline:none;
+    appearance:none;min-width:88px;cursor:pointer;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6' fill='%238b97a8'><path d='M0 0h10L5 6z'/></svg>");
+    background-repeat:no-repeat;background-position:right 10px center;background-size:9px;
+  }
+  select:focus{border-color:var(--acc)}
+  .divider{display:flex;align-items:center;gap:10px;margin:11px 0 4px}
+  .divider i{flex:1;height:1px;background:var(--line)}
+  .divider button{
+    background:var(--key);border:1px solid var(--line);color:var(--acc);
+    width:34px;height:34px;border-radius:50%;font-size:14px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:transform .25s;
+  }
+  .divider button:active{transform:rotate(180deg)}
+  .xrate{color:var(--dim);font-size:11.5px;text-align:right;margin-top:8px;font-variant-numeric:tabular-nums}
+
+  .pad{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+  .pad button{
+    background:var(--key);border:none;color:var(--txt);border-radius:16px;height:60px;
+    font-size:23px;font-weight:600;font-family:inherit;cursor:pointer;
+    font-variant-numeric:tabular-nums;transition:filter .08s;
+  }
+  .pad button:active{filter:brightness(1.5)}
+  .pad .op{background:var(--key2);color:var(--acc);font-size:24px}
+  .pad .fn{background:var(--key2);color:var(--dim);font-size:19px}
+  .pad .eq{background:var(--acc);color:#15181d}
+  .pad .wide{grid-column:span 2}
+
+  .rates{display:none;background:var(--panel);border:1px solid var(--line);border-radius:var(--rad);padding:14px;margin-top:12px}
+  .rhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
+  .rhead h2{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--dim);margin:0;font-weight:600}
+  table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+  td{padding:8px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+  tr:last-child td{border-bottom:none}
+  td.c{font-weight:700;width:52px}
+  td.n{color:var(--dim);font-size:12px}
+  td.v{text-align:right;font-weight:600;white-space:nowrap}
+  .note{color:#67727f;font-size:11px;margin-top:10px;line-height:1.5}
+  .note a{color:#8b97a8}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span id="status">Курс НБУ: <b id="asof">завантаження…</b></span>
+  <button id="ratesBtn">Курси</button>
+</div>
+
+<div class="screen">
+  <div class="expr" id="expr"></div>
+  <div class="line">
+    <div class="val" id="val">0</div>
+    <select id="from"></select>
+  </div>
+  <div class="divider"><i></i><button id="swapBtn" title="Поміняти">⇅</button><i></i></div>
+  <div class="line">
+    <div class="val" id="conv">0</div>
+    <select id="to"></select>
+  </div>
+  <div class="xrate" id="xrate"></div>
+</div>
+
+<div class="pad">
+  <button class="fn" data-k="C">C</button>
+  <button class="fn" data-k="back">⌫</button>
+  <button class="fn" data-k="%">%</button>
+  <button class="op" data-k="÷">÷</button>
+  <button data-k="7">7</button>
+  <button data-k="8">8</button>
+  <button data-k="9">9</button>
+  <button class="op" data-k="×">×</button>
+  <button data-k="4">4</button>
+  <button data-k="5">5</button>
+  <button data-k="6">6</button>
+  <button class="op" data-k="−">−</button>
+  <button data-k="1">1</button>
+  <button data-k="2">2</button>
+  <button data-k="3">3</button>
+  <button class="op" data-k="+">+</button>
+  <button class="wide" data-k="0">0</button>
+  <button data-k=".">,</button>
+  <button class="eq" data-k="=">=</button>
+</div>
+
+<div class="rates" id="rates">
+  <div class="rhead">
+    <h2>Курси до гривні</h2>
+    <button id="reloadBtn" style="background:none;border:1px solid var(--line);color:var(--dim);border-radius:999px;padding:6px 12px;font-size:12px;font-family:inherit;cursor:pointer">Оновити</button>
+  </div>
+  <table id="tbl"></table>
+  <div class="note">
+    Офіційний курс НБУ — скільки гривень коштує 1 одиниця валюти. Курси завантажуються
+    напряму з <a href="https://bank.gov.ua" target="_blank" rel="noopener">bank.gov.ua</a> при кожному відкритті.
+    У банках та обмінниках курс купівлі/продажу відрізняється. Крос-курси (USD→PLN тощо) рахуються через гривню.
+  </div>
+</div>
+
+<script>
+/* Резервні курси — показуються, якщо API Нацбанку недоступний */
+var FALLBACK_DATE = "10.11.2026";
+var FALLBACK = [
+  ["UAH","Українська гривня",1],
+  ["USD","Долар США",45.4123],
+  ["EUR","Євро",50.8152],
+  ["GBP","Фунт стерлінгів",60.9233],
+  ["PLN","Польський злотий",11.5861],
+  ["CHF","Швейцарський франк",55.4917],
+  ["CZK","Чеська крона",2.0869],
+  ["CAD","Канадський долар",32.2334],
+  ["AUD","Австралійський долар",31.3306],
+  ["JPY","Японська єна",0.28745],
+  ["CNY","Китайський юань",6.8100],
+  ["SEK","Шведська крона",4.6205],
+  ["RON","Румунський лей",9.5126],
+  ["HUF","Угорський форинт",0.139994],
+  ["MDL","Молдовський лей",2.5240],
+  ["TRY","Турецька ліра",0.9050]
+];
+var MAIN = ["USD","EUR","PLN","GBP","CHF","CZK","CAD","AUD","JPY","CNY","SEK","NOK","DKK","RON","HUF","MDL","TRY"];
+var PREF = "kurs-pair-v1";
+var list = [], expr = "", done = false;
+
+function $(id){ return document.getElementById(id); }
+function get(c){ for(var i=0;i<list.length;i++) if(list[i][0]===c) return list[i]; return null; }
+function fmt(x,d){ return x.toLocaleString("uk-UA",{minimumFractionDigits:d,maximumFractionDigits:d}); }
+
+/* ---------- завантаження курсів ---------- */
+function order(a,b){
+  if(a[0]==="UAH") return -1; if(b[0]==="UAH") return 1;
+  var ia=MAIN.indexOf(a[0]), ib=MAIN.indexOf(b[0]);
+  if(ia>-1&&ib>-1) return ia-ib;
+  if(ia>-1) return -1; if(ib>-1) return 1;
+  return a[0].localeCompare(b[0]);
+}
+function useFallback(){
+  list = FALLBACK.map(function(x){ return x.slice(); });
+  $("asof").textContent = FALLBACK_DATE + " (збережені)";
+  $("asof").className = "stale";
+  render();
+}
+function fetchRates(){
+  $("asof").textContent = "завантаження…";
+  $("asof").className = "";
+  fetch("https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json", {cache:"no-store"})
+    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(function(d){
+      if(!Array.isArray(d) || !d.length) throw 0;
+      var out = [["UAH","Українська гривня",1]];
+      d.forEach(function(x){
+        if(x.cc && typeof x.rate === "number" && x.rate > 0) out.push([x.cc, x.txt || x.cc, x.rate]);
+      });
+      if(out.length < 5) throw 0;
+      list = out.sort(order);
+      $("asof").textContent = d[0].exchangedate || "сьогодні";
+      $("asof").className = "";
+      render();
+    })
+    .catch(function(){ useFallback(); });
+}
+
+function fillSelects(){
+  var pair = ["USD","UAH"];
+  try{ var s = (localStorage.getItem(PREF)||"").split("|"); if(s.length===2) pair = s; }catch(e){}
+  ["from","to"].forEach(function(id,i){
+    var sel = $(id), keep = sel.value || pair[i];
+    sel.innerHTML = "";
+    list.forEach(function(x){
+      var o = document.createElement("option");
+      o.value = x[0]; o.textContent = x[0]; o.title = x[1];
+      sel.appendChild(o);
+    });
+    sel.value = get(keep) ? keep : (i===0 ? "USD" : "UAH");
+  });
+}
+function savePair(){
+  try{ localStorage.setItem(PREF, $("from").value + "|" + $("to").value); }catch(e){}
+}
+
+/* ---------- калькулятор ---------- */
+function compute(s){
+  s = s.replace(/×/g,"*").replace(/÷/g,"/").replace(/−/g,"-");
+  s = s.replace(/(\d*\.?\d+)%/g, function(m,n){ return String(parseFloat(n)/100); });
+  var t = s.match(/\d*\.?\d+|[*\/+\-]/g);
+  if(!t) return null;
+  while(t.length && /^[*\/+\-]$/.test(t[t.length-1])) t.pop();
+  if(!t.length) return null;
+  if(/^[*\/+\-]$/.test(t[0])){ if(t[0]==="-") t.unshift("0"); else t.shift(); }
+  if(!t.length || isNaN(parseFloat(t[0]))) return null;
+  var out = [parseFloat(t[0])], i;
+  for(i=1;i<t.length;i+=2){
+    var op=t[i], nx=parseFloat(t[i+1]);
+    if(isNaN(nx)) break;
+    if(op==="*") out[out.length-1]*=nx;
+    else if(op==="/"){ if(nx===0) return NaN; out[out.length-1]/=nx; }
+    else { out.push(op); out.push(nx); }
+  }
+  var res = out[0];
+  for(i=1;i<out.length;i+=2) res = (out[i]==="+") ? res+out[i+1] : res-out[i+1];
+  return res;
+}
+
+function show(){
+  $("expr").textContent = expr.replace(/\./g, ",");
+  var v = compute(expr), f = get($("from").value), t = get($("to").value);
+  var xr = (f && t && f[2] && t[2] && f[0] !== t[0])
+    ? "1 " + f[0] + " = " + fmt(f[2]/t[2],4) + " " + t[0] + "   ·   1 " + t[0] + " = " + fmt(t[2]/f[2],4) + " " + f[0]
+    : (f && t && f[0] === t[0] ? "та сама валюта" : "");
+
+  if(v === null){ $("val").textContent = "0"; $("conv").textContent = "0"; $("xrate").textContent = xr; return; }
+  if(isNaN(v) || !isFinite(v)){ $("val").textContent = "—"; $("conv").textContent = "—"; $("xrate").textContent = xr; return; }
+
+  $("val").textContent = fmt(v, (Math.abs(v) < 1 && v !== 0) ? 4 : 2);
+  if(!f || !t || !t[2]){ $("conv").textContent = "—"; $("xrate").textContent = ""; return; }
+  var res = v * (f[2]/t[2]);
+  $("conv").textContent = fmt(res, (Math.abs(res) < 1 && res !== 0) ? 4 : 2);
+  $("xrate").textContent = xr;
+}
+
+function tail(){ return expr.slice(-1); }
+function isOp(c){ return c !== "" && "+−×÷".indexOf(c) > -1; }
+function curNum(){ var m = expr.match(/[\d.]*$/); return m ? m[0] : ""; }
+
+function press(k){
+  if(k === "C"){ expr = ""; done = false; show(); return; }
+  if(k === "back"){ expr = expr.slice(0,-1); done = false; show(); return; }
+  if(k === "="){
+    var v = compute(expr);
+    if(v !== null && !isNaN(v) && isFinite(v)){ expr = String(parseFloat(v.toFixed(6))); done = true; }
+    show(); return;
+  }
+  if(/[0-9]/.test(k)){ if(done){ expr = ""; done = false; } expr += k; show(); return; }
+  if(k === "."){
+    if(done){ expr = ""; done = false; }
+    if(curNum().indexOf(".") > -1) return;
+    if(curNum() === "") expr += "0";
+    expr += "."; show(); return;
+  }
+  if(k === "%"){
+    if(curNum() === "" || curNum() === ".") return;
+    expr += "%"; done = false; show(); return;
+  }
+  if(isOp(k)){
+    done = false;
+    if(expr === ""){ if(k === "−"){ expr = "−"; show(); } return; }
+    if(isOp(tail()) || tail() === ".") expr = expr.slice(0,-1);
+    expr += k; show(); return;
+  }
+}
+
+function drawTable(){
+  var tb = $("tbl"); tb.innerHTML = "";
+  list.forEach(function(x){
+    if(x[0] === "UAH") return;
+    var tr = document.createElement("tr");
+    tr.innerHTML = "<td class='c'>"+x[0]+"</td><td class='n'>"+x[1]+"</td><td class='v'>"+fmt(x[2],4)+" ₴</td>";
+    tb.appendChild(tr);
+  });
+}
+function render(){ fillSelects(); show(); if($("rates").style.display === "block") drawTable(); }
+
+document.querySelectorAll(".pad button").forEach(function(b){
+  b.addEventListener("click", function(){ press(b.dataset.k); });
+});
+document.addEventListener("keydown", function(e){
+  var m = {"/":"÷","*":"×","-":"−","+":"+","=":"=","Enter":"=","Backspace":"back","Escape":"C"};
+  if(/^[0-9]$/.test(e.key)) press(e.key);
+  else if(e.key === "." || e.key === ",") press(".");
+  else if(e.key === "%") press("%");
+  else if(m[e.key]){ e.preventDefault(); press(m[e.key]); }
+});
+$("ratesBtn").addEventListener("click", function(){
+  var box = $("rates"), open = box.style.display === "block";
+  box.style.display = open ? "none" : "block";
+  this.textContent = open ? "Курси" : "Сховати";
+  if(!open) drawTable();
+});
+$("reloadBtn").addEventListener("click", fetchRates);
+$("swapBtn").addEventListener("click", function(){
+  var f = $("from").value; $("from").value = $("to").value; $("to").value = f;
+  savePair(); show();
+});
+$("from").addEventListener("change", function(){ savePair(); show(); });
+$("to").addEventListener("change", function(){ savePair(); show(); });
+
+useFallback();
+fetchRates();
+</script>
+</body>
+</html>
