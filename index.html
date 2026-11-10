@@ -184,7 +184,7 @@
   <div class="note" id="rNote"></div>
 </div>
 
-<div class="ver">версія 8</div>
+<div class="ver">версія 9</div>
 
 <script>
 /* Резервні курси НБУ — якщо не вдалося завантажити ні rates.json, ні API Нацбанку */
@@ -436,8 +436,9 @@ function render(){
 }
 
 /* ---------- обчислення ---------- */
-/* Відсоток рахується як у звичайному калькуляторі:
-   200−10% = 180 (десять відсотків від 200), а 200×10% = 20. */
+/* Рахує підряд, зліва направо, як кишеньковий калькулятор:
+   12−2×9 = 90 (12−2 = 10, потім ×9).
+   Відсоток: 200−10% = 180, 200×10% = 20. */
 function compute(s){
   s = s.replace(/×/g,"*").replace(/÷/g,"/").replace(/−/g,"-");
   var t = s.match(/\d*\.?\d+%?|[*\/+\-]/g);
@@ -445,42 +446,30 @@ function compute(s){
   while(t.length && /^[*\/+\-]$/.test(t[t.length-1])) t.pop();
   if(!t.length) return null;
   if(/^[*\/+\-]$/.test(t[0])){ if(t[0] === "-") t.unshift("0"); else t.shift(); }
-  if(!t.length || isNaN(parseFloat(t[0]))) return null;
+  if(!t.length) return null;
 
-  function term(tok){
-    return { v: parseFloat(tok), pct: tok.indexOf("%") > -1 };
-  }
+  var first = parseFloat(t[0]);
+  if(isNaN(first)) return null;
+  var res = (t[0].indexOf("%") > -1) ? first/100 : first;
 
-  /* перший прохід: × та ÷ */
-  var first = term(t[0]);
-  var head = first.pct ? first.v/100 : first.v;
-  if(isNaN(head)) return null;
-  var chain = [], i;
-  for(i=1;i<t.length;i+=2){
-    var op = t[i], nextTok = t[i+1];
-    if(nextTok === undefined) break;
-    var nx = term(nextTok);
-    if(isNaN(nx.v)) break;
-    if(op === "*" || op === "/"){
-      var r = nx.pct ? nx.v/100 : nx.v;
-      var target = chain.length ? chain[chain.length-1].t : null;
-      var base = target ? target.v : head;
-      if(op === "/" && r === 0) return NaN;
-      var out = (op === "*") ? base*r : base/r;
-      if(target) target.v = out; else head = out;
-    } else {
-      chain.push({ op: op, t: { v: nx.v, pct: nx.pct } });
+  for(var i=1;i<t.length;i+=2){
+    var op = t[i], tok = t[i+1];
+    if(tok === undefined) break;
+    var v = parseFloat(tok);
+    if(isNaN(v)) break;
+    var pct = tok.indexOf("%") > -1;
+    if(op === "+")      res += pct ? res*v/100 : v;
+    else if(op === "-") res -= pct ? res*v/100 : v;
+    else if(op === "*") res *= pct ? v/100 : v;
+    else {
+      var d = pct ? v/100 : v;
+      if(d === 0) return NaN;
+      res /= d;
     }
-  }
-
-  /* другий прохід: + та −, відсоток береться від поточної суми */
-  var res = head;
-  for(i=0;i<chain.length;i++){
-    var it = chain[i], add = it.t.pct ? res*it.t.v/100 : it.t.v;
-    res = (it.op === "+") ? res + add : res - add;
   }
   return res;
 }
+
 function tail(){ return expr.slice(-1); }
 function isOp(c){ return c !== "" && "+−×÷".indexOf(c) > -1; }
 function curNum(){ var m = expr.match(/[\d.]*$/); return m ? m[0] : ""; }
