@@ -48,7 +48,13 @@
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><g fill='none' stroke='%23ece4d4' stroke-opacity='0.055' stroke-width='0.7'><circle cx='60' cy='60' r='55'/><circle cx='60' cy='60' r='45'/><circle cx='60' cy='60' r='35'/><circle cx='60' cy='60' r='25'/><circle cx='60' cy='60' r='15'/><circle cx='0' cy='0' r='35'/><circle cx='120' cy='120' r='35'/><circle cx='120' cy='0' r='25'/><circle cx='0' cy='120' r='25'/></g></svg>");
   }
   .mark{position:absolute;right:10px;bottom:-26px;font-family:Literata,Georgia,serif;font-size:118px;line-height:1;color:rgba(236,228,212,.045);pointer-events:none;font-weight:700}
-  .expr{position:relative;color:var(--paper-dim);font-size:14px;text-align:right;min-height:20px;overflow:hidden;white-space:nowrap;direction:rtl}
+  /* overflow-x + прокрутка в JS, а не direction:rtl — інакше вираз показується навиворіт */
+  .expr{
+    position:relative;color:var(--paper-dim);font-size:14px;text-align:right;min-height:20px;
+    white-space:nowrap;overflow-x:auto;overflow-y:hidden;
+    scrollbar-width:none;-ms-overflow-style:none;
+  }
+  .expr::-webkit-scrollbar{display:none}
   .line{position:relative;display:flex;align-items:center;gap:12px;margin-top:4px}
   .line .val{flex:1;min-width:0;text-align:right;overflow:hidden;white-space:nowrap;font-weight:600}
   #val{font-size:36px}
@@ -348,7 +354,10 @@ function whenText(){
 }
 
 function show(){
-  $("expr").textContent = expr.replace(/\./g, ",");
+  var ex = $("expr");
+  ex.textContent = expr.replace(/\./g, ",");
+  /* тримаємо видимим кінець виразу */
+  ex.scrollLeft = ex.scrollWidth;
   var v = compute(expr);
   var from = $("from").value, to = $("to").value;
 
