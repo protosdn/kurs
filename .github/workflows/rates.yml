@@ -1,14 +1,45 @@
-name: Оновлення курсів банків
+name: Оновлення курсів
+
 on:
   schedule:
+    # щогодини о :17 — банки оновлюють курси кілька разів на день
     - cron: "17 * * * *"
   workflow_dispatch:
+
 permissions:
   contents: write
+
+concurrency:
+  group: rates
+  cancel-in-progress: false
+
 jobs:
   update:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Заглушка
-        run: echo "placeholder"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Зібрати курси
+        env:
+          MINFIN_TOKEN: ${{ secrets.MINFIN_TOKEN }}
+        run: node scripts/rates.mjs
+
+      - name: Закомітити зміни
+        run: |
+          if [ -f /tmp/unchanged ]; then
+            echo "Без змін."
+            exit 0
+          fi
+          if git diff --quiet -- rates.json; then
+            echo "rates.json не змінився."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add rates.json
+          git commit -m "Курси: $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push

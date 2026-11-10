@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Калькулятор з курсом валют НБУ</title>
-<meta name="description" content="Калькулятор з живим офіційним курсом НБУ: конвертація валют і звичайні обчислення.">
+<title>Калькулятор з курсом валют</title>
+<meta name="description" content="Калькулятор з курсом валют: офіційний курс НБУ та курси банків, купівля і продаж.">
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="theme-color" content="#0e1626">
@@ -13,15 +13,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600;7..72,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#0e1626;        /* чорнило банкноти */
-    --plate:#16203a;      /* друкарська пластина */
-    --engrave:#2a3a63;    /* гравійовані лінії */
-    --slate:#223055;      /* службові клавіші */
-    --paper:#ece4d4;      /* папір */
-    --paper-dim:#9aa6bf;
-    --violet:#9484cc;     /* 50 грн */
-    --gold:#cf9a52;       /* 500 грн */
-    --jade:#4fb292;       /* гривня */
+    --ink:#0e1626; --plate:#16203a; --engrave:#2a3a63; --slate:#223055;
+    --paper:#ece4d4; --paper-dim:#9aa6bf;
+    --violet:#9484cc; --gold:#cf9a52; --jade:#4fb292;
     --r:14px;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;touch-action:manipulation}
@@ -29,48 +23,32 @@
   body{
     padding:16px 12px 30px;max-width:440px;margin:0 auto;color:var(--paper);
     font:16px/1.45 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    background:
-      radial-gradient(120% 70% at 50% -10%, #1b2742 0%, rgba(27,39,66,0) 60%),
-      var(--ink);
+    background:radial-gradient(120% 70% at 50% -10%, #1b2742 0%, rgba(27,39,66,0) 60%), var(--ink);
     min-height:100vh;
   }
   .num{font-family:Literata,Georgia,serif;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 
-  /* шапка */
   .topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 2px 10px}
   .seg{display:inline-flex;border:1px solid var(--engrave);border-radius:999px;padding:2px;gap:2px}
-  .seg button{
-    background:transparent;border:none;color:var(--paper-dim);
-    border-radius:999px;padding:6px 13px;font-size:12.5px;font-family:inherit;cursor:pointer;
-  }
+  .seg button{background:transparent;border:none;color:var(--paper-dim);border-radius:999px;padding:6px 13px;font-size:12.5px;font-family:inherit;cursor:pointer}
   .seg button.on{background:var(--violet);color:#141a2c;font-weight:600}
-  .when{color:var(--paper-dim);font-size:12.5px;margin:0 4px 12px}
+  .topbar>button{background:transparent;border:1px solid var(--engrave);color:var(--paper-dim);border-radius:999px;padding:6px 13px;font-size:12.5px;font-family:inherit;cursor:pointer;white-space:nowrap}
+  .topbar>button:active{border-color:var(--violet);color:var(--paper)}
+
+  .srcrow{display:flex;align-items:center;gap:10px;margin:0 2px 12px}
+  .when{color:var(--paper-dim);font-size:12px;line-height:1.3;min-width:0}
   .when b{color:var(--jade);font-weight:600;font-family:Literata,Georgia,serif}
   .when b.stale{color:var(--gold)}
-  body.calc .when,body.calc #mid,body.calc #lineTo,body.calc #xrate,body.calc #from{display:none}
-  body.calc .screen{padding-bottom:18px}
-  .topbar button{
-    background:transparent;border:1px solid var(--engrave);color:var(--paper-dim);
-    border-radius:999px;padding:6px 13px;font-size:12.5px;font-family:inherit;cursor:pointer;white-space:nowrap;
-  }
-  .topbar button:active{border-color:var(--violet);color:var(--paper)}
 
-  /* екран */
   .screen{
-    position:relative;overflow:hidden;
-    background:var(--plate);border:1px solid var(--engrave);border-radius:var(--r);
+    position:relative;overflow:hidden;background:var(--plate);
+    border:1px solid var(--engrave);border-radius:var(--r);
     padding:16px 16px 14px;margin-bottom:14px;
     box-shadow:inset 0 1px 0 rgba(236,228,212,.06);
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><g fill='none' stroke='%23ece4d4' stroke-opacity='0.055' stroke-width='0.7'><circle cx='60' cy='60' r='55'/><circle cx='60' cy='60' r='45'/><circle cx='60' cy='60' r='35'/><circle cx='60' cy='60' r='25'/><circle cx='60' cy='60' r='15'/><circle cx='0' cy='0' r='35'/><circle cx='120' cy='120' r='35'/><circle cx='120' cy='0' r='25'/><circle cx='0' cy='120' r='25'/></g></svg>");
   }
-  .mark{
-    position:absolute;right:10px;bottom:-26px;font-family:Literata,Georgia,serif;
-    font-size:118px;line-height:1;color:rgba(236,228,212,.045);pointer-events:none;font-weight:700;
-  }
-  .expr{
-    position:relative;color:var(--paper-dim);font-size:14px;text-align:right;min-height:20px;
-    overflow:hidden;white-space:nowrap;direction:rtl;
-  }
+  .mark{position:absolute;right:10px;bottom:-26px;font-family:Literata,Georgia,serif;font-size:118px;line-height:1;color:rgba(236,228,212,.045);pointer-events:none;font-weight:700}
+  .expr{position:relative;color:var(--paper-dim);font-size:14px;text-align:right;min-height:20px;overflow:hidden;white-space:nowrap;direction:rtl}
   .line{position:relative;display:flex;align-items:center;gap:12px;margin-top:4px}
   .line .val{flex:1;min-width:0;text-align:right;overflow:hidden;white-space:nowrap;font-weight:600}
   #val{font-size:36px}
@@ -79,30 +57,29 @@
     background:var(--ink);border:1px solid var(--engrave);color:var(--paper);
     border-radius:10px;padding:9px 27px 9px 11px;font-size:15px;font-weight:600;
     font-family:Literata,Georgia,serif;letter-spacing:.02em;
-    outline:none;appearance:none;min-width:90px;cursor:pointer;
+    outline:none;appearance:none;cursor:pointer;
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6' fill='%239484cc'><path d='M0 0h10L5 6z'/></svg>");
     background-repeat:no-repeat;background-position:right 10px center;background-size:9px;
   }
   select:focus{border-color:var(--violet)}
+  #from,#to{min-width:90px}
+  #src{font-family:Inter,sans-serif;font-size:13px;font-weight:500;padding:8px 26px 8px 10px;max-width:58%}
   .mid{position:relative;display:flex;align-items:center;gap:12px;margin:12px 0 6px}
   .mid i{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--engrave),transparent)}
-  .mid button{
-    background:var(--ink);border:1px solid var(--engrave);color:var(--violet);
-    width:36px;height:36px;border-radius:50%;font-size:15px;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;flex:none;
-  }
+  .mid button{background:var(--ink);border:1px solid var(--engrave);color:var(--violet);width:36px;height:36px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none}
   .mid button:active{background:var(--violet);color:var(--ink);border-color:var(--violet)}
-  .xrate{position:relative;color:var(--paper-dim);font-size:11.5px;text-align:right;margin-top:10px;font-variant-numeric:tabular-nums}
+  .xrate{position:relative;color:var(--paper-dim);font-size:11.5px;text-align:right;margin-top:10px;font-variant-numeric:tabular-nums;line-height:1.6}
+  .xrate em{color:var(--gold);font-style:normal}
 
-  /* клавіатура */
+  body.calc .srcrow,body.calc #mid,body.calc #lineTo,body.calc #xrate,body.calc #from{display:none}
+  body.calc .screen{padding-bottom:18px}
+
   .pad{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
   .pad button{
     border:none;border-radius:var(--r);height:62px;cursor:pointer;
     font-family:Literata,Georgia,serif;font-variant-numeric:tabular-nums;
-    font-size:25px;font-weight:600;
-    background:var(--paper);color:var(--ink);
-    box-shadow:0 1px 0 rgba(0,0,0,.35);
-    transition:transform .06s ease;
+    font-size:25px;font-weight:600;background:var(--paper);color:var(--ink);
+    box-shadow:0 1px 0 rgba(0,0,0,.35);transition:transform .06s ease;
   }
   .pad button:active{transform:scale(.96)}
   .pad .op{background:var(--violet);color:#141a2c;font-size:26px}
@@ -111,24 +88,19 @@
   .pad .wide{grid-column:span 2}
   @media (prefers-reduced-motion:reduce){ .pad button{transition:none} }
 
-  /* курси */
-  .rates{
-    display:none;background:var(--plate);border:1px solid var(--engrave);
-    border-radius:var(--r);padding:14px;margin-top:14px;
-  }
+  .rates{display:none;background:var(--plate);border:1px solid var(--engrave);border-radius:var(--r);padding:14px;margin-top:14px}
   .rhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px}
   .rhead h2{font-size:14px;margin:0;font-weight:600;font-family:Literata,Georgia,serif;color:var(--paper)}
-  .rhead button{
-    background:transparent;border:1px solid var(--engrave);color:var(--paper-dim);
-    border-radius:999px;padding:6px 13px;font-size:12.5px;font-family:inherit;cursor:pointer;
-  }
+  .rhead button{background:transparent;border:1px solid var(--engrave);color:var(--paper-dim);border-radius:999px;padding:6px 13px;font-size:12.5px;font-family:inherit;cursor:pointer}
   .rhead button:active{border-color:var(--jade);color:var(--paper)}
   table{width:100%;border-collapse:collapse}
-  td{padding:9px 0;border-bottom:1px solid rgba(42,58,99,.6);font-size:15px}
+  td,th{padding:9px 0;border-bottom:1px solid rgba(42,58,99,.6);font-size:15px;text-align:left}
+  th{font-size:11px;font-weight:500;color:var(--paper-dim);font-family:Inter,sans-serif;padding-bottom:5px}
+  th.r,td.r{text-align:right}
   tr:last-child td{border-bottom:none}
   td.c{width:54px;font-family:Literata,Georgia,serif;font-weight:700;color:var(--gold);letter-spacing:.02em}
   td.n{color:var(--paper-dim);font-size:12.5px}
-  td.v{text-align:right;white-space:nowrap;font-family:Literata,Georgia,serif;font-variant-numeric:tabular-nums;font-weight:600}
+  td.v{white-space:nowrap;font-family:Literata,Georgia,serif;font-variant-numeric:tabular-nums;font-weight:600}
   .note{color:#76829b;font-size:11.5px;margin-top:12px;line-height:1.55}
   .note a{color:var(--violet)}
   :focus-visible{outline:2px solid var(--violet);outline-offset:2px}
@@ -143,7 +115,11 @@
   </div>
   <button id="ratesBtn">Курси</button>
 </div>
-<div class="when" id="whenLine">Офіційний курс НБУ на <b id="asof">завантаження…</b></div>
+
+<div class="srcrow" id="srcRow">
+  <select id="src"></select>
+  <span class="when" id="whenLine">завантаження…</span>
+</div>
 
 <div class="screen">
   <div class="mark">₴</div>
@@ -184,97 +160,228 @@
 
 <div class="rates" id="rates">
   <div class="rhead">
-    <h2>Курси до гривні</h2>
+    <h2 id="rTitle">Курси</h2>
     <button id="reloadBtn">Оновити</button>
   </div>
   <table id="tbl"></table>
-  <div class="note">
-    Скільки гривень коштує одна одиниця валюти. Курси беруться напряму з
-    <a href="https://bank.gov.ua" target="_blank" rel="noopener">bank.gov.ua</a> при кожному відкритті.
-    У банках та обмінниках курс купівлі й продажу відрізняється від офіційного.
-    Пари без гривні — USD→PLN і подібні — рахуються через гривню.
-  </div>
+  <div class="note" id="rNote"></div>
 </div>
 
 <script>
-/* Резервні курси — показуються, якщо API Нацбанку недоступний */
+/* Резервні курси НБУ — якщо не вдалося завантажити ні rates.json, ні API Нацбанку */
 var FALLBACK_DATE = "10.11.2026";
-var FALLBACK = [
-  ["UAH","Українська гривня",1],
-  ["USD","Долар США",45.4123],
-  ["EUR","Євро",50.8152],
-  ["GBP","Фунт стерлінгів",60.9233],
-  ["PLN","Польський злотий",11.5861],
-  ["CHF","Швейцарський франк",55.4917],
-  ["CZK","Чеська крона",2.0869],
-  ["CAD","Канадський долар",32.2334],
-  ["AUD","Австралійський долар",31.3306],
-  ["JPY","Японська єна",0.28745],
-  ["CNY","Китайський юань",6.8100],
-  ["SEK","Шведська крона",4.6205],
-  ["RON","Румунський лей",9.5126],
-  ["HUF","Угорський форинт",0.139994],
-  ["MDL","Молдовський лей",2.5240],
-  ["TRY","Турецька ліра",0.9050]
-];
+var FALLBACK = {
+  USD:[45.4123,"Долар США"], EUR:[50.8152,"Євро"], GBP:[60.9233,"Фунт стерлінгів"],
+  PLN:[11.5861,"Польський злотий"], CHF:[55.4917,"Швейцарський франк"],
+  CZK:[2.0869,"Чеська крона"], CAD:[32.2334,"Канадський долар"],
+  AUD:[31.3306,"Австралійський долар"], JPY:[0.28745,"Японська єна"],
+  CNY:[6.8100,"Китайський юань"], SEK:[4.6205,"Шведська крона"],
+  RON:[9.5126,"Румунський лей"], HUF:[0.139994,"Угорський форинт"],
+  MDL:[2.5240,"Молдовський лей"], TRY:[0.9050,"Турецька ліра"]
+};
 var MAIN = ["USD","EUR","PLN","GBP","CHF","CZK","CAD","AUD","JPY","CNY","SEK","NOK","DKK","RON","HUF","MDL","TRY"];
-var PREF = "kurs-pair-v1";
-var list = [], expr = "", done = false;
+var K_PAIR = "kurs-pair-v1", K_MODE = "kurs-mode-v1", K_SRC = "kurs-src-v1";
+
+var DATA = { nbu:null, banks:[], updated:null, stale:false };
+var srcId = "nbu", expr = "", done = false;
 
 function $(id){ return document.getElementById(id); }
-function get(c){ for(var i=0;i<list.length;i++) if(list[i][0]===c) return list[i]; return null; }
 function fmt(x,d){ return x.toLocaleString("uk-UA",{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function money(x){ return fmt(x, (Math.abs(x) < 1 && x !== 0) ? 4 : 2); }
+function store(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function recall(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
 
-/* ---------- курси ---------- */
-function order(a,b){
-  if(a[0]==="UAH") return -1; if(b[0]==="UAH") return 1;
-  var ia=MAIN.indexOf(a[0]), ib=MAIN.indexOf(b[0]);
-  if(ia>-1&&ib>-1) return ia-ib;
+/* ---------- джерела ---------- */
+function bank(){
+  if(srcId === "nbu") return null;
+  for(var i=0;i<DATA.banks.length;i++) if(DATA.banks[i].id === srcId) return DATA.banks[i];
+  return null;
+}
+function nameOf(c){
+  if(c === "UAH") return "Українська гривня";
+  return (DATA.nbu && DATA.nbu.names && DATA.nbu.names[c]) || c;
+}
+function codeOrder(a,b){
+  var ia = MAIN.indexOf(a), ib = MAIN.indexOf(b);
+  if(ia>-1 && ib>-1) return ia-ib;
   if(ia>-1) return -1; if(ib>-1) return 1;
-  return a[0].localeCompare(b[0]);
+  return a.localeCompare(b);
 }
-function useFallback(){
-  list = FALLBACK.map(function(x){ return x.slice(); });
-  $("asof").textContent = FALLBACK_DATE + " (збережені)";
-  $("asof").className = "stale";
-  render();
+function codes(){
+  var b = bank();
+  if(b) return ["UAH"].concat(Object.keys(b.pairs).sort(codeOrder));
+  var r = DATA.nbu ? Object.keys(DATA.nbu.rates) : [];
+  return ["UAH"].concat(r.filter(function(c){ return c !== "UAH"; }).sort(codeOrder));
 }
-function fetchRates(){
-  $("asof").textContent = "завантаження…";
-  $("asof").className = "";
-  fetch("https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json", {cache:"no-store"})
+
+/* Переведення суми. Для банку: ти продаєш валюту — банк купує (buy);
+   ти купуєш валюту — банк продає (sell). */
+function convert(v, from, to){
+  if(from === to) return { value:v, note:"та сама валюта" };
+  var b = bank();
+  if(!b){
+    if(!DATA.nbu) return null;
+    var rf = from === "UAH" ? 1 : DATA.nbu.rates[from];
+    var rt = to === "UAH" ? 1 : DATA.nbu.rates[to];
+    if(!rf || !rt) return null;
+    var k = rf/rt;
+    return {
+      value: v*k,
+      note: "1 " + from + " = " + fmt(k,4) + " " + to + " · 1 " + to + " = " + fmt(1/k,4) + " " + from
+    };
+  }
+  if(from === "UAH"){
+    var p = b.pairs[to];
+    if(!p) return null;
+    return { value: v/p.sell, note: "<em>продаж</em> " + fmt(p.sell,4) + " ₴ за 1 " + to };
+  }
+  if(to === "UAH"){
+    var q = b.pairs[from];
+    if(!q) return null;
+    return { value: v*q.buy, note: "<em>купівля</em> " + fmt(q.buy,4) + " ₴ за 1 " + from };
+  }
+  var a = b.pairs[from], z = b.pairs[to];
+  if(!a || !z) return null;
+  return {
+    value: v*a.buy/z.sell,
+    note: "через гривню: <em>купівля</em> " + fmt(a.buy,4) + " · <em>продаж</em> " + fmt(z.sell,4)
+  };
+}
+
+/* ---------- завантаження ---------- */
+function applyFallback(){
+  var rates = { UAH:1 }, names = { UAH:"Українська гривня" };
+  for(var c in FALLBACK){ rates[c] = FALLBACK[c][0]; names[c] = FALLBACK[c][1]; }
+  DATA = { nbu:{ date:FALLBACK_DATE, rates:rates, names:names }, banks:[], updated:null, stale:true };
+}
+function fromNbuApi(d){
+  var rates = { UAH:1 }, names = { UAH:"Українська гривня" };
+  for(var i=0;i<d.length;i++){
+    var x = d[i];
+    if(x.cc && typeof x.rate === "number" && x.rate > 0){ rates[x.cc] = x.rate; names[x.cc] = x.txt || x.cc; }
+  }
+  if(Object.keys(rates).length < 5) return null;
+  return { date: d[0].exchangedate || null, rates:rates, names:names };
+}
+function load(){
+  $("whenLine").textContent = "завантаження…";
+  fetch("rates.json?t=" + Date.now(), { cache:"no-store" })
     .then(function(r){ if(!r.ok) throw 0; return r.json(); })
-    .then(function(d){
-      if(!Array.isArray(d) || !d.length) throw 0;
-      var out = [["UAH","Українська гривня",1]];
-      d.forEach(function(x){
-        if(x.cc && typeof x.rate === "number" && x.rate > 0) out.push([x.cc, x.txt || x.cc, x.rate]);
-      });
-      if(out.length < 5) throw 0;
-      list = out.sort(order);
-      $("asof").textContent = d[0].exchangedate || "сьогодні";
-      $("asof").className = "";
+    .then(function(j){
+      if(!j || !j.nbu || !j.nbu.rates) throw 0;
+      if(!j.nbu.rates.UAH) j.nbu.rates.UAH = 1;
+      if(!j.nbu.names) j.nbu.names = {};
+      j.nbu.names.UAH = "Українська гривня";
+      DATA = { nbu:j.nbu, banks:Array.isArray(j.banks) ? j.banks : [], updated:j.updated || null, stale:false };
       render();
     })
-    .catch(function(){ useFallback(); });
+    .catch(function(){
+      /* rates.json ще не створений або недоступний — беремо курс НБУ напряму */
+      fetch("https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json", { cache:"no-store" })
+        .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+        .then(function(d){
+          var n = Array.isArray(d) && d.length ? fromNbuApi(d) : null;
+          if(!n) throw 0;
+          DATA = { nbu:n, banks:[], updated:null, stale:false };
+          render();
+        })
+        .catch(function(){ applyFallback(); render(); });
+    });
 }
 
-function fillSelects(){
-  var pair = ["USD","UAH"];
-  try{ var s = (localStorage.getItem(PREF)||"").split("|"); if(s.length===2) pair = s; }catch(e){}
+/* ---------- інтерфейс ---------- */
+function fillSrc(){
+  var sel = $("src");
+  sel.innerHTML = "";
+  var opts = [["nbu","НБУ · офіційний"]];
+  DATA.banks.forEach(function(b){ opts.push([b.id, b.name]); });
+  opts.forEach(function(o){
+    var el = document.createElement("option");
+    el.value = o[0]; el.textContent = o[1];
+    sel.appendChild(el);
+  });
+  var ok = false;
+  for(var i=0;i<opts.length;i++) if(opts[i][0] === srcId) ok = true;
+  if(!ok) srcId = "nbu";
+  sel.value = srcId;
+}
+function fillPair(){
+  var cs = codes(), pair = ["USD","UAH"];
+  var saved = (recall(K_PAIR) || "").split("|");
+  if(saved.length === 2) pair = saved;
   ["from","to"].forEach(function(id,i){
     var sel = $(id), keep = sel.value || pair[i];
     sel.innerHTML = "";
-    list.forEach(function(x){
+    cs.forEach(function(c){
       var o = document.createElement("option");
-      o.value = x[0]; o.textContent = x[0]; o.title = x[1];
+      o.value = c; o.textContent = c; o.title = nameOf(c);
       sel.appendChild(o);
     });
-    sel.value = get(keep) ? keep : (i===0 ? "USD" : "UAH");
+    if(cs.indexOf(keep) > -1) sel.value = keep;
+    else sel.value = (i === 0) ? (cs.indexOf("USD") > -1 ? "USD" : cs[1] || cs[0]) : "UAH";
   });
 }
-function savePair(){
-  try{ localStorage.setItem(PREF, $("from").value + "|" + $("to").value); }catch(e){}
+function whenText(){
+  var b = bank();
+  if(b){
+    var t = DATA.updated ? new Date(DATA.updated) : null;
+    return "курс банку" + (t ? ", оновлено " + t.toLocaleString("uk-UA",{hour:"2-digit",minute:"2-digit",day:"2-digit",month:"2-digit"}) : "");
+  }
+  var d = DATA.nbu && DATA.nbu.date ? DATA.nbu.date : "—";
+  return "офіційний курс на <b" + (DATA.stale ? " class='stale'" : "") + ">" + d + (DATA.stale ? " (збережений)" : "") + "</b>";
+}
+
+function show(){
+  $("expr").textContent = expr.replace(/\./g, ",");
+  var v = compute(expr);
+  var from = $("from").value, to = $("to").value;
+
+  if(v === null){ $("val").textContent = "0"; v = 0; }
+  else if(isNaN(v) || !isFinite(v)){ $("val").textContent = "—"; $("conv").textContent = "—"; $("xrate").textContent = ""; return; }
+  else $("val").textContent = money(v);
+
+  var c = convert(v, from, to);
+  if(!c){
+    $("conv").textContent = "—";
+    $("xrate").innerHTML = "цей банк не дає курсу для " + (bank() && !bank().pairs[from] ? from : to);
+    return;
+  }
+  $("conv").textContent = money(c.value);
+  $("xrate").innerHTML = c.note;
+}
+
+function drawTable(){
+  var tb = $("tbl"), b = bank(), rows = "";
+  $("rTitle").textContent = b ? b.name : "Офіційний курс НБУ";
+  if(b){
+    rows = "<tr><th>Валюта</th><th class='r'>Купівля</th><th class='r'>Продаж</th></tr>";
+    Object.keys(b.pairs).sort(codeOrder).forEach(function(c){
+      var p = b.pairs[c];
+      rows += "<tr><td class='c'>"+c+"</td><td class='v r'>"+fmt(p.buy,2)+" ₴</td><td class='v r'>"+fmt(p.sell,2)+" ₴</td></tr>";
+    });
+    $("rNote").innerHTML = "Купівля — скільки банк платить за вашу валюту, продаж — скільки ви платите за неї. " +
+      "Готівковий курс різниться навіть між відділеннями одного банку, тому це орієнтир, а не каса. " +
+      "Дані оновлюються щогодини.";
+  } else {
+    rows = "<tr><th>Валюта</th><th></th><th class='r'>Курс</th></tr>";
+    codes().forEach(function(c){
+      if(c === "UAH") return;
+      var r = DATA.nbu.rates[c];
+      if(!r) return;
+      rows += "<tr><td class='c'>"+c+"</td><td class='n'>"+nameOf(c)+"</td><td class='v r'>"+fmt(r,4)+" ₴</td></tr>";
+    });
+    $("rNote").innerHTML = "Скільки гривень коштує одна одиниця валюти за курсом Національного банку. " +
+      "Джерело — <a href='https://bank.gov.ua' target='_blank' rel='noopener'>bank.gov.ua</a>. " +
+      "У касах банків курс купівлі й продажу інший — вибери банк у списку вгорі.";
+  }
+  tb.innerHTML = rows;
+}
+
+function render(){
+  fillSrc(); fillPair();
+  $("whenLine").innerHTML = whenText();
+  show();
+  if($("rates").style.display === "block") drawTable();
 }
 
 /* ---------- обчислення ---------- */
@@ -285,38 +392,20 @@ function compute(s){
   if(!t) return null;
   while(t.length && /^[*\/+\-]$/.test(t[t.length-1])) t.pop();
   if(!t.length) return null;
-  if(/^[*\/+\-]$/.test(t[0])){ if(t[0]==="-") t.unshift("0"); else t.shift(); }
+  if(/^[*\/+\-]$/.test(t[0])){ if(t[0] === "-") t.unshift("0"); else t.shift(); }
   if(!t.length || isNaN(parseFloat(t[0]))) return null;
   var out = [parseFloat(t[0])], i;
   for(i=1;i<t.length;i+=2){
-    var op=t[i], nx=parseFloat(t[i+1]);
+    var op = t[i], nx = parseFloat(t[i+1]);
     if(isNaN(nx)) break;
-    if(op==="*") out[out.length-1]*=nx;
-    else if(op==="/"){ if(nx===0) return NaN; out[out.length-1]/=nx; }
+    if(op === "*") out[out.length-1] *= nx;
+    else if(op === "/"){ if(nx === 0) return NaN; out[out.length-1] /= nx; }
     else { out.push(op); out.push(nx); }
   }
   var res = out[0];
-  for(i=1;i<out.length;i+=2) res = (out[i]==="+") ? res+out[i+1] : res-out[i+1];
+  for(i=1;i<out.length;i+=2) res = (out[i] === "+") ? res+out[i+1] : res-out[i+1];
   return res;
 }
-
-function show(){
-  $("expr").textContent = expr.replace(/\./g, ",");
-  var v = compute(expr), f = get($("from").value), t = get($("to").value);
-  var xr = (f && t && f[2] && t[2] && f[0] !== t[0])
-    ? "1 " + f[0] + " = " + fmt(f[2]/t[2],4) + " " + t[0] + "   ·   1 " + t[0] + " = " + fmt(t[2]/f[2],4) + " " + f[0]
-    : (f && t && f[0] === t[0] ? "та сама валюта" : "");
-
-  if(v === null){ $("val").textContent = "0"; $("conv").textContent = "0"; $("xrate").textContent = xr; return; }
-  if(isNaN(v) || !isFinite(v)){ $("val").textContent = "—"; $("conv").textContent = "—"; $("xrate").textContent = xr; return; }
-
-  $("val").textContent = fmt(v, (Math.abs(v) < 1 && v !== 0) ? 4 : 2);
-  if(!f || !t || !t[2]){ $("conv").textContent = "—"; $("xrate").textContent = ""; return; }
-  var res = v * (f[2]/t[2]);
-  $("conv").textContent = fmt(res, (Math.abs(res) < 1 && res !== 0) ? 4 : 2);
-  $("xrate").textContent = xr;
-}
-
 function tail(){ return expr.slice(-1); }
 function isOp(c){ return c !== "" && "+−×÷".indexOf(c) > -1; }
 function curNum(){ var m = expr.match(/[\d.]*$/); return m ? m[0] : ""; }
@@ -348,49 +437,28 @@ function press(k){
   }
 }
 
-function drawTable(){
-  var tb = $("tbl"); tb.innerHTML = "";
-  list.forEach(function(x){
-    if(x[0] === "UAH") return;
-    var tr = document.createElement("tr");
-    tr.innerHTML = "<td class='c'>"+x[0]+"</td><td class='n'>"+x[1]+"</td><td class='v'>"+fmt(x[2],4)+" ₴</td>";
-    tb.appendChild(tr);
-  });
-}
-function render(){ fillSelects(); show(); if($("rates").style.display === "block") drawTable(); }
-
-/* Натиск обробляється на pointerdown і скасовує стандартний жест,
+/* Натиск на pointerdown скасовує стандартний жест:
    інакше два тапи поспіль iOS читає як подвійний тап і масштабує екран. */
 document.querySelectorAll(".pad button").forEach(function(b){
   if(window.PointerEvent){
     b.addEventListener("pointerdown", function(e){
       if(e.pointerType === "mouse" && e.button !== 0) return;
-      e.preventDefault();
-      press(b.dataset.k);
+      e.preventDefault(); press(b.dataset.k);
     });
   } else {
     var viaTouch = false;
-    b.addEventListener("touchstart", function(e){
-      e.preventDefault(); viaTouch = true; press(b.dataset.k);
-    }, {passive:false});
-    b.addEventListener("click", function(){
-      if(viaTouch){ viaTouch = false; return; }
-      press(b.dataset.k);
-    });
+    b.addEventListener("touchstart", function(e){ e.preventDefault(); viaTouch = true; press(b.dataset.k); }, {passive:false});
+    b.addEventListener("click", function(){ if(viaTouch){ viaTouch = false; return; } press(b.dataset.k); });
   }
 });
-/* Подвійний тап поза клавіатурою теж не масштабує */
 (function(){
   var last = 0;
   document.addEventListener("touchend", function(e){
-    var t = Date.now();
-    if(t - last < 400 && e.target.tagName !== "SELECT" && e.target.tagName !== "INPUT" && e.target.tagName !== "A"){
-      e.preventDefault();
-    }
+    var t = Date.now(), tag = e.target.tagName;
+    if(t - last < 400 && tag !== "SELECT" && tag !== "INPUT" && tag !== "A") e.preventDefault();
     last = t;
   }, {passive:false});
 })();
-
 document.addEventListener("keydown", function(e){
   var m = {"/":"÷","*":"×","-":"−","+":"+","=":"=","Enter":"=","Backspace":"back","Escape":"C"};
   if(/^[0-9]$/.test(e.key)) press(e.key);
@@ -398,39 +466,50 @@ document.addEventListener("keydown", function(e){
   else if(e.key === "%") press("%");
   else if(m[e.key]){ e.preventDefault(); press(m[e.key]); }
 });
-/* ---------- режими ---------- */
-var MODE = "kurs-mode-v1";
+
 function setMode(m, remember){
   var calc = (m === "calc");
   document.body.classList.toggle("calc", calc);
   $("modeCalc").classList.toggle("on", calc);
   $("modeCur").classList.toggle("on", !calc);
-  if(remember){ try{ localStorage.setItem(MODE, m); }catch(e){} }
+  if(remember) store(K_MODE, m);
   show();
 }
 $("modeCur").addEventListener("click", function(){ setMode("cur", true); });
 $("modeCalc").addEventListener("click", function(){ setMode("calc", true); });
 
+$("src").addEventListener("change", function(){
+  srcId = this.value;
+  store(K_SRC, srcId);
+  fillPair();
+  $("whenLine").innerHTML = whenText();
+  show();
+  if($("rates").style.display === "block") drawTable();
+});
 $("ratesBtn").addEventListener("click", function(){
   var box = $("rates"), open = box.style.display === "block";
   box.style.display = open ? "none" : "block";
   this.textContent = open ? "Курси" : "Сховати";
   if(!open) drawTable();
 });
-$("reloadBtn").addEventListener("click", fetchRates);
+$("reloadBtn").addEventListener("click", load);
 $("swapBtn").addEventListener("click", function(){
   var f = $("from").value; $("from").value = $("to").value; $("to").value = f;
-  savePair(); show();
+  store(K_PAIR, $("from").value + "|" + $("to").value);
+  show();
 });
-$("from").addEventListener("change", function(){ savePair(); show(); });
-$("to").addEventListener("change", function(){ savePair(); show(); });
+["from","to"].forEach(function(id){
+  $(id).addEventListener("change", function(){
+    store(K_PAIR, $("from").value + "|" + $("to").value);
+    show();
+  });
+});
 
-var savedMode = "cur";
-try{ if(localStorage.getItem(MODE) === "calc") savedMode = "calc"; }catch(e){}
-setMode(savedMode, false);
-
-useFallback();
-fetchRates();
+srcId = recall(K_SRC) || "nbu";
+setMode(recall(K_MODE) === "calc" ? "calc" : "cur", false);
+applyFallback();
+render();
+load();
 </script>
 </body>
 </html>
