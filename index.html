@@ -112,6 +112,7 @@
   .note{color:#76829b;font-size:11.5px;margin-top:12px;line-height:1.55}
   .note a{color:var(--violet)}
   :focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+  .ver{text-align:center;color:#3f4a63;font-size:10.5px;margin-top:16px;letter-spacing:.04em}
 </style>
 </head>
 <body>
@@ -182,6 +183,8 @@
   <table id="tbl"></table>
   <div class="note" id="rNote"></div>
 </div>
+
+<div class="ver">версія 8</div>
 
 <script>
 /* Резервні курси НБУ — якщо не вдалося завантажити ні rates.json, ні API Нацбанку */
@@ -433,25 +436,49 @@ function render(){
 }
 
 /* ---------- обчислення ---------- */
+/* Відсоток рахується як у звичайному калькуляторі:
+   200−10% = 180 (десять відсотків від 200), а 200×10% = 20. */
 function compute(s){
   s = s.replace(/×/g,"*").replace(/÷/g,"/").replace(/−/g,"-");
-  s = s.replace(/(\d*\.?\d+)%/g, function(m,n){ return String(parseFloat(n)/100); });
-  var t = s.match(/\d*\.?\d+|[*\/+\-]/g);
+  var t = s.match(/\d*\.?\d+%?|[*\/+\-]/g);
   if(!t) return null;
   while(t.length && /^[*\/+\-]$/.test(t[t.length-1])) t.pop();
   if(!t.length) return null;
   if(/^[*\/+\-]$/.test(t[0])){ if(t[0] === "-") t.unshift("0"); else t.shift(); }
   if(!t.length || isNaN(parseFloat(t[0]))) return null;
-  var out = [parseFloat(t[0])], i;
-  for(i=1;i<t.length;i+=2){
-    var op = t[i], nx = parseFloat(t[i+1]);
-    if(isNaN(nx)) break;
-    if(op === "*") out[out.length-1] *= nx;
-    else if(op === "/"){ if(nx === 0) return NaN; out[out.length-1] /= nx; }
-    else { out.push(op); out.push(nx); }
+
+  function term(tok){
+    return { v: parseFloat(tok), pct: tok.indexOf("%") > -1 };
   }
-  var res = out[0];
-  for(i=1;i<out.length;i+=2) res = (out[i] === "+") ? res+out[i+1] : res-out[i+1];
+
+  /* перший прохід: × та ÷ */
+  var first = term(t[0]);
+  var head = first.pct ? first.v/100 : first.v;
+  if(isNaN(head)) return null;
+  var chain = [], i;
+  for(i=1;i<t.length;i+=2){
+    var op = t[i], nextTok = t[i+1];
+    if(nextTok === undefined) break;
+    var nx = term(nextTok);
+    if(isNaN(nx.v)) break;
+    if(op === "*" || op === "/"){
+      var r = nx.pct ? nx.v/100 : nx.v;
+      var target = chain.length ? chain[chain.length-1].t : null;
+      var base = target ? target.v : head;
+      if(op === "/" && r === 0) return NaN;
+      var out = (op === "*") ? base*r : base/r;
+      if(target) target.v = out; else head = out;
+    } else {
+      chain.push({ op: op, t: { v: nx.v, pct: nx.pct } });
+    }
+  }
+
+  /* другий прохід: + та −, відсоток береться від поточної суми */
+  var res = head;
+  for(i=0;i<chain.length;i++){
+    var it = chain[i], add = it.t.pct ? res*it.t.v/100 : it.t.v;
+    res = (it.op === "+") ? res + add : res - add;
+  }
   return res;
 }
 function tail(){ return expr.slice(-1); }
