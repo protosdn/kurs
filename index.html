@@ -293,9 +293,37 @@ function drawTable(){
 }
 function render(){ fillSelects(); show(); if($("rates").style.display === "block") drawTable(); }
 
+/* Натиск обробляється на pointerdown і скасовує стандартний жест,
+   інакше два тапи поспіль iOS читає як подвійний тап і масштабує екран. */
 document.querySelectorAll(".pad button").forEach(function(b){
-  b.addEventListener("click", function(){ press(b.dataset.k); });
+  if(window.PointerEvent){
+    b.addEventListener("pointerdown", function(e){
+      if(e.pointerType === "mouse" && e.button !== 0) return;
+      e.preventDefault();
+      press(b.dataset.k);
+    });
+  } else {
+    var viaTouch = false;
+    b.addEventListener("touchstart", function(e){
+      e.preventDefault(); viaTouch = true; press(b.dataset.k);
+    }, {passive:false});
+    b.addEventListener("click", function(){
+      if(viaTouch){ viaTouch = false; return; }
+      press(b.dataset.k);
+    });
+  }
 });
+/* Подвійний тап поза клавіатурою теж не масштабує */
+(function(){
+  var last = 0;
+  document.addEventListener("touchend", function(e){
+    var t = Date.now();
+    if(t - last < 400 && e.target.tagName !== "SELECT" && e.target.tagName !== "INPUT" && e.target.tagName !== "A"){
+      e.preventDefault();
+    }
+    last = t;
+  }, {passive:false});
+})();
 document.addEventListener("keydown", function(e){
   var m = {"/":"÷","*":"×","-":"−","+":"+","=":"=","Enter":"=","Backspace":"back","Escape":"C"};
   if(/^[0-9]$/.test(e.key)) press(e.key);
