@@ -57,8 +57,8 @@
   .expr::-webkit-scrollbar{display:none}
   .line{position:relative;display:flex;align-items:center;gap:12px;margin-top:4px}
   .line .val{flex:1;min-width:0;text-align:right;overflow:hidden;white-space:nowrap;font-weight:600}
-  #val{font-size:36px}
-  #conv{font-size:28px;color:var(--jade)}
+  #val{font-size:36px;line-height:1.15}
+  #conv{font-size:28px;line-height:1.15;color:var(--jade)}
   select{
     background:var(--ink);border:1px solid var(--engrave);color:var(--paper);
     border-radius:10px;padding:9px 27px 9px 11px;font-size:15px;font-weight:600;
@@ -353,6 +353,13 @@ function whenText(){
   return "офіційний курс на <b" + (DATA.stale ? " class='stale'" : "") + ">" + d + (DATA.stale ? " (збережений)" : "") + "</b>";
 }
 
+/* Зменшує кегль, поки число не вміститься в рядок — інакше довгі суми обрізаються */
+function fit(el, max, min){
+  el.style.fontSize = max + "px";
+  var s = max;
+  while(el.scrollWidth > el.clientWidth && s > min){ s -= 1; el.style.fontSize = s + "px"; }
+}
+
 function show(){
   var ex = $("expr");
   ex.textContent = expr.replace(/\./g, ",");
@@ -362,16 +369,22 @@ function show(){
   var from = $("from").value, to = $("to").value;
 
   if(v === null){ $("val").textContent = "0"; v = 0; }
-  else if(isNaN(v) || !isFinite(v)){ $("val").textContent = "—"; $("conv").textContent = "—"; $("xrate").textContent = ""; return; }
+  else if(isNaN(v) || !isFinite(v)){
+    $("val").textContent = "—"; $("conv").textContent = "—"; $("xrate").textContent = "";
+    fit($("val"),36,18); fit($("conv"),28,15); return;
+  }
   else $("val").textContent = money(v);
+  fit($("val"), 36, 18);
 
   var c = convert(v, from, to);
   if(!c){
     $("conv").textContent = "—";
+    fit($("conv"), 28, 15);
     $("xrate").innerHTML = "цей банк не дає курсу для " + (bank() && !bank().pairs[from] ? from : to);
     return;
   }
   $("conv").textContent = money(c.value);
+  fit($("conv"), 28, 15);
   $("xrate").innerHTML = c.note;
 }
 
