@@ -37,10 +37,18 @@
   .num{font-family:Literata,Georgia,serif;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 
   /* шапка */
-  .topbar{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 2px 12px}
-  .topbar .when{color:var(--paper-dim);font-size:12.5px}
-  .topbar .when b{color:var(--jade);font-weight:600;font-family:Literata,Georgia,serif}
-  .topbar .when b.stale{color:var(--gold)}
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 2px 10px}
+  .seg{display:inline-flex;border:1px solid var(--engrave);border-radius:999px;padding:2px;gap:2px}
+  .seg button{
+    background:transparent;border:none;color:var(--paper-dim);
+    border-radius:999px;padding:6px 13px;font-size:12.5px;font-family:inherit;cursor:pointer;
+  }
+  .seg button.on{background:var(--violet);color:#141a2c;font-weight:600}
+  .when{color:var(--paper-dim);font-size:12.5px;margin:0 4px 12px}
+  .when b{color:var(--jade);font-weight:600;font-family:Literata,Georgia,serif}
+  .when b.stale{color:var(--gold)}
+  body.calc .when,body.calc #mid,body.calc #lineTo,body.calc #xrate,body.calc #from{display:none}
+  body.calc .screen{padding-bottom:18px}
   .topbar button{
     background:transparent;border:1px solid var(--engrave);color:var(--paper-dim);
     border-radius:999px;padding:6px 13px;font-size:12.5px;font-family:inherit;cursor:pointer;white-space:nowrap;
@@ -129,9 +137,13 @@
 <body>
 
 <div class="topbar">
-  <span class="when">Офіційний курс НБУ на <b id="asof">завантаження…</b></span>
+  <div class="seg">
+    <button id="modeCur" class="on">Валюти</button>
+    <button id="modeCalc">Калькулятор</button>
+  </div>
   <button id="ratesBtn">Курси</button>
 </div>
+<div class="when" id="whenLine">Офіційний курс НБУ на <b id="asof">завантаження…</b></div>
 
 <div class="screen">
   <div class="mark">₴</div>
@@ -140,8 +152,8 @@
     <div class="val num" id="val">0</div>
     <select id="from"></select>
   </div>
-  <div class="mid"><i></i><button id="swapBtn" title="Поміняти валюти">⇅</button><i></i></div>
-  <div class="line">
+  <div class="mid" id="mid"><i></i><button id="swapBtn" title="Поміняти валюти">⇅</button><i></i></div>
+  <div class="line" id="lineTo">
     <div class="val num" id="conv">0</div>
     <select id="to"></select>
   </div>
@@ -386,6 +398,19 @@ document.addEventListener("keydown", function(e){
   else if(e.key === "%") press("%");
   else if(m[e.key]){ e.preventDefault(); press(m[e.key]); }
 });
+/* ---------- режими ---------- */
+var MODE = "kurs-mode-v1";
+function setMode(m, remember){
+  var calc = (m === "calc");
+  document.body.classList.toggle("calc", calc);
+  $("modeCalc").classList.toggle("on", calc);
+  $("modeCur").classList.toggle("on", !calc);
+  if(remember){ try{ localStorage.setItem(MODE, m); }catch(e){} }
+  show();
+}
+$("modeCur").addEventListener("click", function(){ setMode("cur", true); });
+$("modeCalc").addEventListener("click", function(){ setMode("calc", true); });
+
 $("ratesBtn").addEventListener("click", function(){
   var box = $("rates"), open = box.style.display === "block";
   box.style.display = open ? "none" : "block";
@@ -399,6 +424,10 @@ $("swapBtn").addEventListener("click", function(){
 });
 $("from").addEventListener("change", function(){ savePair(); show(); });
 $("to").addEventListener("change", function(){ savePair(); show(); });
+
+var savedMode = "cur";
+try{ if(localStorage.getItem(MODE) === "calc") savedMode = "calc"; }catch(e){}
+setMode(savedMode, false);
 
 useFallback();
 fetchRates();
